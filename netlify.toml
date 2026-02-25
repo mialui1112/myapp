@@ -4,7 +4,9 @@
   node_bundler = "esbuild"
 
 # Cấu hình lịch chạy cụ thể cho hàm 'checkForNewChapters'
-# Tên [functions.checkForNewChapters] phải khớp với tên tệp hàm (checkForNewChapters.ts)
 [functions.checkForNewChapters]
-  # Cron expression: Chạy vào phút thứ 0 của mỗi giờ
   schedule = "0 * * * *"
+
+# Plugin để tự động cài đặt các dependencies của hàm
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
