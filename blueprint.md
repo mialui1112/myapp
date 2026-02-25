@@ -1,71 +1,42 @@
-# Blueprint: Ứng dụng Giải trí 18+
+# Blueprint: Ứng dụng Manga Reader
 
 ## Tổng quan
 
-Đây là một ứng dụng Flutter được thiết kế để cung cấp trải nghiệm đọc truyện tranh, manga và xem phim dành cho người lớn. Ứng dụng sẽ có giao diện người dùng tối màu, kín đáo và cao cấp, với điều hướng rõ ràng giữa các phần chính: Truyện tranh, Manga và Phim.
+Đây là một ứng dụng đọc truyện tranh (manga) hiện đại được xây dựng bằng Flutter và tích hợp với Firebase. Ứng dụng cho phép người dùng đăng ký, đăng nhập, tìm kiếm, đọc, lưu trữ truyện yêu thích và xem lại lịch sử đọc. Giao diện được thiết kế để mang lại trải nghiệm đọc tốt nhất, đặc biệt là trên các thiết- bị di động.
 
-## Thiết kế và Giao diện
+## Các tính năng chính
 
-*   **Chủ đề:** Tối (Dark theme) làm chủ đạo để tạo cảm giác cao cấp và riêng tư.
-*   **Màu sắc:** Sử dụng bảng màu tối với các màu nhấn mạnh như đỏ đậm, tím hoặc vàng để tạo điểm nhấn.
-*   **Typography:** Sử dụng phông chữ `google_fonts` để có kiểu chữ đẹp và dễ đọc.
-*   **Bố cục:** Rõ ràng, trực quan với các thẻ và danh sách để duyệt nội dung.
+*   **Xác thực người dùng (Firebase Auth):** Đăng ký/đăng nhập và quản lý phiên đăng nhập.
+*   **Đồng bộ hóa Yêu thích (Cloud Firestore):** Danh sách yêu thích được cập nhật theo thời gian thực với chi phí tối ưu.
+*   **Đồng bộ hóa Lịch sử đọc (Cloud Firestore):** Lịch sử đọc được cập nhật tức thì trên các thiết bị, chỉ với một lượt ghi cho mỗi truyện.
+*   **Thông báo Chương Mới (Cloud Functions & FCM):** Tự động kiểm tra và gửi thông báo đẩy (push notification) cho người dùng khi có chương mới của truyện họ yêu thích.
+*   **Giao diện Người dùng Hiện đại (UI/UX):**
+    *   Hiệu ứng động tinh tế trong các danh sách, tạo cảm giác mượt mà.
+    *   Chế độ đọc toàn màn hình, không bị xao lãng.
+*   **Màn hình chính (Home):** Thanh tìm kiếm và danh sách truyện mới.
+*   **Màn hình Đọc truyện Nâng cao:** Chế độ xem ngang, điều khiển tương tác.
+*   **Chủ đề Sáng/Tối & Splash Screen.**
 
-## Cấu trúc ứng dụng
+## Cấu trúc và Công nghệ
 
-*   **Điều hướng chính:** `BottomNavigationBar` với ba tab: "Truyện Tranh", "Manga", và "Phim".
-*   **Thư mục:**
-    *   `lib/screens`: Chứa các màn hình chính của ứng dụng.
-    *   `lib/widgets`: Chứa các widget có thể tái sử dụng.
-    *   `lib/models`: Chứa các mô hình dữ liệu (ví dụ: `ComicSource`, `Movie`).
-    *   `lib/theme`: Chứa các tệp cấu hình chủ đề.
+*   **Nền tảng:** Flutter
+*   **Backend:** Firebase (Authentication, Cloud Firestore, Cloud Functions, Firebase Cloud Messaging)
+*   **Kiến trúc:** Sạch sẽ, dễ bảo trì, tách biệt giao diện người dùng và logic nghiệp vụ.
+*   **Quản lý trạng thái:** Provider
+*   **API Truyện:** Sử dụng API của bên thứ ba để lấy dữ liệu truyện.
+*   **Chất lượng mã nguồn:** Tuân thủ các quy tắc nghiêm ngặt của ESLint và Dart Analyzer.
 
----
+## Lịch sử Phát triển
 
-## Lịch sử thay đổi
+1.  **Thiết lập Ban đầu:**
+    *   Khởi tạo dự án Flutter.
+    *   Cấu hình Firebase (core, auth, firestore).
+    *   Thiết lập cấu trúc thư mục và các tệp cơ bản.
 
-### Giai đoạn 1: Cài đặt và Cấu trúc cơ bản
+2.  **Tối ưu hóa Màn hình Đọc truyện (`ReaderScreen`):**
+    *   Triển khai chế độ đọc toàn màn hình (immersive mode).
+    *   Bằng cách chạm vào màn hình, người dùng giờ đây có thể ẩn/hiện đồng thời cả giao diện của ứng dụng (thanh `AppBar`, thanh trượt) và các thanh hệ thống (thanh trạng thái, thanh điều hướng).
+    *   Sử dụng `SystemChrome` để quản lý việc hiển thị các thanh hệ thống và `AnimatedSwitcher` để tạo hiệu ứng chuyển đổi mượt mà cho các thành phần UI.
+    *   Đảm bảo các thanh hệ thống được khôi phục khi người dùng thoát khỏi màn hình đọc.
 
-*   **Tạo tệp `blueprint.md`:** (Đã hoàn thành)
-*   **Thêm các dependency cần thiết:** `provider` để quản lý trạng thái (chuyển đổi theme) và `google_fonts` cho phông chữ.
-*   **Cấu trúc thư mục:** Tạo các thư mục cần thiết (`screens`, `widgets`, `models`, `theme`).
-*   **Thiết lập Theme:**
-    *   Tạo một `ThemeProvider` để cho phép chuyển đổi giữa chế độ sáng và tối.
-    *   Định nghĩa `darkTheme` và `lightTheme` trong một tệp riêng.
-*   **Cập nhật `main.dart`:**
-    *   Sử dụng `ChangeNotifierProvider` để cung cấp `ThemeProvider`.
-    *   Thiết lập `MaterialApp` để sử dụng theme.
-    *   Tạo `HomePage` với `BottomNavigationBar`.
-
-### Giai đoạn 2: Xây dựng màn hình "Truyện Tranh"
-
-*   **Tạo `comics_screen.dart`:**
-    *   Hiển thị một danh sách **cuộn ngang** các "Nguồn" truyện (sử dụng dữ liệu giả lập).
-    *   Mỗi nguồn sẽ là một `Card` có thể nhấp vào.
-*   **Tạo màn hình chi tiết nguồn:**
-    *   Khi nhấp vào một nguồn, điều hướng đến một màn hình mới.
-    *   Màn hình này sẽ hiển thị danh sách các truyện tranh từ nguồn đó (dữ liệu giả lập).
-
-### Giai đoạn 3: Xây dựng màn hình "Phim"
-
-*   **Tạo `movies_screen.dart`:**
-    *   Hiển thị một danh sách tổng hợp các bộ phim.
-    *   Thêm các `FilterChip` ở đầu màn hình để lọc phim theo: "Mới nhất", "Yêu thích nhất", "Phổ biến".
-    *   Mỗi bộ phim sẽ được hiển thị trong một `Card` với hình ảnh và tiêu đề.
-
----
-
-## Kế hoạch hiện tại (Đã hoàn thành)
-
-**Yêu cầu:** Thêm màn hình "Manga", chuyển danh sách "Comics" sang chiều ngang, và thêm thanh tìm kiếm.
-
-1.  **Cập nhật màn hình "Comics":**
-    *   Thay đổi `ListView` thành `ListView.builder` với `scrollDirection: Axis.horizontal`.
-    *   Thêm một `TextField` để làm thanh tìm kiếm, cho phép lọc danh sách các nguồn truyện.
-2.  **Tạo màn hình "Manga":**
-    *   Tạo tệp mới `lib/screens/manga_screen.dart`.
-    *   Triển khai bố cục tương tự màn hình "Comics" với danh sách nguồn cuộn ngang và thanh tìm kiếm.
-3.  **Tích hợp màn hình "Manga":**
-    *   Import `manga_screen.dart` vào `lib/main.dart`.
-    *   Thêm "Manga" vào `BottomNavigationBar` và danh sách các widget/tiêu đề tương ứng.
-4.  **Cập nhật `blueprint.md`:** Phản ánh các thay đổi trên trong tài liệu này.
+**Kết quả:** Ứng dụng giờ đây mang lại cảm giác bóng bẩy, chuyên nghiệp hơn rất nhiều. Trải nghiệm đọc truyện đã được nâng lên một tầm cao mới, hoàn toàn không bị phân tâm, trong khi các danh sách chính trở nên hấp dẫn và dễ chịu hơn khi tương tác.

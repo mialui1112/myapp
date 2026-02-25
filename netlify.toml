@@ -1,0 +1,13 @@
+# netlify.toml
+[functions]
+  # Tự động tìm các hàm trong thư mục này
+  directory = "netlify/functions"
+  # Chỉ định môi trường Node.js
+  node_bundler = "esbuild"
+
+# Định nghĩa lịch trình chạy cho hàm
+[[functions.schedule]]
+  # Tên của tệp hàm (không có phần mở rộng .ts)
+  function = "checkForNewChapters"
+  # Cron expression: Chạy vào phút thứ 0 của mỗi giờ (ví dụ: 1:00, 2:00, 3:00)
+  cron = "0 * * * *"
