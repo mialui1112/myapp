@@ -58,10 +58,7 @@ class MangaSourceDetailScreenState extends State<MangaSourceDetailScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => MangaDetailScreen(
-                          endpoint: manga.endpoint,
-                          manga: manga.toJson(),
-                        ),
+                        builder: (context) => MangaDetailScreen(mangaEndpoint: manga.endpoint),
                       ),
                     );
                   },

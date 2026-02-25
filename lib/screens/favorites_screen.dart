@@ -55,15 +55,7 @@ class FavoritesScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => MangaDetailScreen(
-                          endpoint: endpoint,
-                           // Pass the full manga object to avoid re-fetching basic data
-                          manga: {
-                            'endpoint': endpoint,
-                            'name': name,
-                            'thumb_url': thumbUrl,
-                          }
-                        ),
+                        builder: (context) => MangaDetailScreen(mangaEndpoint: endpoint),
                       ),
                     );
                   }

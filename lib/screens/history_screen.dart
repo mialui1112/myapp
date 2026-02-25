@@ -81,14 +81,7 @@ class HistoryScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MangaDetailScreen(
-                            endpoint: endpoint,
-                            manga: {
-                                'endpoint': endpoint,
-                                'name': name,
-                                'thumb_url': thumbUrl,
-                            },
-                          ),
+                          builder: (context) => MangaDetailScreen(mangaEndpoint: endpoint),
                         ),
                       );
                     }

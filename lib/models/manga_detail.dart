@@ -1,5 +1,6 @@
 
 import 'package:myapp/models/chapter.dart';
+import 'package:myapp/models/category.dart';
 
 class MangaDetail {
   final String name;
@@ -8,6 +9,7 @@ class MangaDetail {
   final List<String> authors;
   final String status;
   final List<Chapter> chapters;
+  final List<Category> categories;
 
   MangaDetail({
     required this.name,
@@ -16,6 +18,7 @@ class MangaDetail {
     required this.authors,
     required this.status,
     required this.chapters,
+    required this.categories,
   });
 
   factory MangaDetail.fromJson(Map<String, dynamic> json) {
@@ -23,7 +26,7 @@ class MangaDetail {
 
     // Construct the full thumbnail URL
     final String partialThumbUrl = item['thumb_url'] ?? '';
-    final String fullThumbUrl = 'https://img.otruyen.com/uploads/comics/$partialThumbUrl';
+    final String fullThumbUrl = 'https://img.otruyenapi.com/uploads/comics/$partialThumbUrl';
     
     // Extract authors, which can be a list of strings
     final List<dynamic> authorList = item['author'] ?? [];
@@ -33,6 +36,9 @@ class MangaDetail {
     final List<dynamic> serverData = item['chapters']?[0]?['server_data'] ?? [];
     final List<Chapter> chapters = serverData.map((chapterJson) => Chapter.fromJson(chapterJson)).toList();
 
+    final List<dynamic> categoryList = item['category'] ?? [];
+    final List<Category> categories = categoryList.map((categoryJson) => Category.fromJson(categoryJson)).toList();
+
     return MangaDetail(
       name: item['name'] ?? 'No Name',
       thumbUrl: fullThumbUrl,
@@ -41,6 +47,7 @@ class MangaDetail {
       authors: authors,
       status: item['status'] ?? 'Unknown',
       chapters: chapters,
+      categories: categories,
     );
   }
 }

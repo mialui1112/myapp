@@ -1,6 +1,6 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:myapp/models/manga.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -35,6 +35,18 @@ class FirestoreService {
     final uid = getCurrentUserId();
     if (uid == null) return Stream.value(false);
     return _db.collection('users').doc(uid).collection('favorites').doc(endpoint).snapshots().map((s) => s.exists);
+  }
+
+  Stream<List<Manga>> getFavorites() {
+    final uid = getCurrentUserId();
+    if (uid == null) return Stream.value([]);
+    return _db
+        .collection('users')
+        .doc(uid)
+        .collection('favorites')
+        .orderBy('favoritedAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Manga.fromFirestore(doc.data())).toList());
   }
 
   Stream<QuerySnapshot> getFavoritesStream() {

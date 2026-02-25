@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:myapp/models/manga.dart';
@@ -7,10 +6,11 @@ import 'package:myapp/models/chapter_content.dart';
 
 class OTruyenApiService {
   static const String _baseUrl = 'https://otruyenapi.com/v1/api';
+  static const String _cdnUrl = 'https://sv1.otruyencdn.com/v1/api';
 
-  Future<List<Manga>> getLatestManga() async {
+  Future<List<Manga>> getMangaList({String endpoint = 'home'}) async {
     try {
-      final response = await http.get(Uri.parse('$_baseUrl/home'));
+      final response = await http.get(Uri.parse('$_baseUrl/$endpoint'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List<dynamic> mangaListJson = data['data']?['items'] ?? [];
@@ -21,6 +21,10 @@ class OTruyenApiService {
     } catch (e) {
       throw Exception('Failed to load manga: $e');
     }
+  }
+
+  Future<List<Manga>> getLatestManga() async {
+    return getMangaList();
   }
 
   Future<MangaDetail> getMangaDetail(String slug) async {
@@ -39,7 +43,7 @@ class OTruyenApiService {
 
   Future<ChapterContent> getChapterContent(String chapterId) async {
     try {
-      final response = await http.get(Uri.parse('$_baseUrl/truyen-tranh/chapters/$chapterId'));
+      final response = await http.get(Uri.parse('$_cdnUrl/chapter/$chapterId'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return ChapterContent.fromJson(data);
@@ -56,18 +60,6 @@ class OTruyenApiService {
     if (keyword.isEmpty) {
       return [];
     }
-    try {
-      final response = await http.get(Uri.parse('$_baseUrl/tim-kiem?keyword=$keyword'));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // The search API has a slightly different structure
-        final List<dynamic> mangaListJson = data['data']?['items'] ?? [];
-        return mangaListJson.map((json) => Manga.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to search manga. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to search manga: $e');
-    }
+    return getMangaList(endpoint: 'tim-kiem?keyword=$keyword');
   }
 }

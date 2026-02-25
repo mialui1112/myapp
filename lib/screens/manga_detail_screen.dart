@@ -1,121 +1,178 @@
-
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:myapp/models/chapter.dart';
 import 'package:myapp/models/manga_detail.dart';
 import 'package:myapp/services/otruyen_api_service.dart';
-import 'package:myapp/services/firestore_service.dart';
-import 'package:myapp/services/download_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:intl/intl.dart';
 import 'package:myapp/screens/reader_screen.dart';
 
 class MangaDetailScreen extends StatefulWidget {
-  final String endpoint;
-  final Map<String, dynamic> manga;
+  final String mangaEndpoint;
 
-  const MangaDetailScreen({super.key, required this.endpoint, required this.manga});
+  const MangaDetailScreen({super.key, required this.mangaEndpoint});
 
   @override
-  MangaDetailScreenState createState() => MangaDetailScreenState();
+  State<MangaDetailScreen> createState() => _MangaDetailScreenState();
 }
 
-class MangaDetailScreenState extends State<MangaDetailScreen> {
-  late Future<MangaDetail?> _mangaDetailFuture;
+class _MangaDetailScreenState extends State<MangaDetailScreen> {
+  late Future<MangaDetail> _mangaDetailFuture;
   final OTruyenApiService _apiService = OTruyenApiService();
 
   @override
   void initState() {
     super.initState();
-    _mangaDetailFuture = _apiService.getMangaDetail(widget.endpoint);
+    _mangaDetailFuture = _apiService.getMangaDetail(widget.mangaEndpoint);
   }
 
   @override
   Widget build(BuildContext context) {
-    final firestoreService = Provider.of<FirestoreService>(context, listen: false);
-    final downloadService = Provider.of<DownloadService>(context, listen: false);
-
-    return Scaffold(
-      body: FutureBuilder<MangaDetail?>(
+    return FutureBuilder<MangaDetail>(
         future: _mangaDetailFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-            return CustomScrollView(
-              slivers: [
-                _buildSliverAppBar(firestoreService, null),
-              ],
-            );
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          } else if (snapshot.hasError) {
+            return Scaffold(body: Center(child: Text('Error: ${snapshot.error}')));
+          } else if (!snapshot.hasData) {
+            return const Scaffold(body: Center(child: Text('No data found')));
           } else {
-            final mangaDetail = snapshot.data!;
-            return CustomScrollView(
-              slivers: [
-                _buildSliverAppBar(firestoreService, mangaDetail),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildDescription(mangaDetail),
-                        const SizedBox(height: 24),
-                        _buildChapterList(firestoreService, downloadService, mangaDetail),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            final manga = snapshot.data!;
+            return Scaffold(
+              body: _buildMangaDetailView(manga),
+              floatingActionButton: FloatingActionButton.extended(
+                onPressed: () {
+                  if (manga.chapters.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReaderScreen(
+                          chapterId: manga.chapters.first.chapterId,
+                          mangaName: manga.name,
+                          chapterList: manga.chapters.map((c) => {'id': c.chapterId, 'name': c.name}).toList(),
+                        ),
+                      ),
+                    );
+                  }
+                },
+                label: const Text('Continue Reading'),
+                icon: const Icon(Icons.play_arrow),
+              ),
             );
           }
         },
-      ),
+      );
+  }
+
+  Widget _buildMangaDetailView(MangaDetail manga) {
+    return CustomScrollView(
+      slivers: <Widget>[
+        _buildSliverAppBar(manga),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(manga),
+                const SizedBox(height: 16),
+                _buildActionButtons(),
+                const SizedBox(height: 24),
+                _buildDescription(manga),
+                const SizedBox(height: 16),
+                _buildCategoryTags(manga),
+                const SizedBox(height: 24),
+                _buildChapterList(manga),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildSliverAppBar(FirestoreService firestoreService, MangaDetail? manga) {
-    final displayName = manga?.name ?? widget.manga['name'];
-    final displayThumb = manga?.thumbUrl ?? widget.manga['thumb_url'];
-
+  Widget _buildSliverAppBar(MangaDetail manga) {
     return SliverAppBar(
-      expandedHeight: 300.0,
+      expandedHeight: 250.0,
       pinned: true,
+      flexibleSpace: FlexibleSpaceBar(
+        background: CachedNetworkImage(
+          imageUrl: manga.thumbUrl,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+          errorWidget: (context, url, error) => const Icon(Icons.error),
+        ),
+      ),
       actions: [
-        StreamBuilder<bool>(
-          stream: firestoreService.isFavoriteStream(widget.endpoint),
-          builder: (context, snapshot) {
-            final isFavorite = snapshot.data ?? false;
-            return IconButton(
-              icon: Icon(
-                isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: isFavorite ? Colors.red : Colors.white,
-                shadows: const [Shadow(blurRadius: 2.0)],
+        IconButton(icon: const Icon(Icons.download_outlined), onPressed: () {}),
+        IconButton(icon: const Icon(Icons.sort), onPressed: () {}),
+        IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
+      ],
+    );
+  }
+
+  Widget _buildHeader(MangaDetail manga) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CachedNetworkImage(
+          imageUrl: manga.thumbUrl,
+          width: 100,
+          height: 150,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+          errorWidget: (context, url, error) => Container(color: Colors.grey[200]),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                manga.name,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
-              onPressed: () {
-                if (isFavorite) {
-                  firestoreService.removeFavorite(widget.endpoint);
-                } else {
-                  firestoreService.addFavorite({
-                    'name': displayName,
-                    'thumb_url': displayThumb,
-                    'endpoint': widget.endpoint,
-                  });
-                }
-              },
-              tooltip: 'Toggle Favorite',
-            );
-          },
+              const SizedBox(height: 8),
+              Text(
+                'Authors: ${manga.authors.join(', ')}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.circle, color: Colors.green, size: 12),
+                  const SizedBox(width: 4),
+                  Text(
+                    manga.status.replaceFirst(manga.status[0], manga.status[0].toUpperCase()),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
-      flexibleSpace: FlexibleSpaceBar(
-        title: Text(displayName, style: const TextStyle(shadows: [Shadow(blurRadius: 10.0)])),
-        background: displayThumb.isNotEmpty
-            ? Image.network(
-                displayThumb,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.error)),
-              )
-            : Container(color: Colors.grey),
-      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildActionButton(icon: Icons.favorite_border, label: 'In Library'),
+        _buildActionButton(icon: Icons.bookmark_border, label: 'Follow'),
+        _buildActionButton(icon: Icons.open_in_new, label: 'WebView'),
+      ],
+    );
+  }
+
+  Widget _buildActionButton({required IconData icon, required String label}) {
+    return Column(
+      children: [
+        Icon(icon, size: 28),
+        const SizedBox(height: 4),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+      ],
     );
   }
 
@@ -123,105 +180,87 @@ class MangaDetailScreenState extends State<MangaDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Synopsis', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Html(data: manga.description, style: {"body": Style(fontSize: FontSize.medium)}),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 16.0,
-          runSpacing: 8.0,
-          children: [
-            _buildInfoChip('Status', manga.status),
-            if (manga.authors.isNotEmpty) _buildInfoChip('Author', manga.authors.join(', ')),
-          ],
-        )
-      ],
-    );
-  }
-
-  Widget _buildInfoChip(String label, String value) {
-    return Chip(
-      label: Text('$label: $value'),
-      backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-    );
-  }
-
-  Widget _buildChapterList(FirestoreService firestoreService, DownloadService downloadService, MangaDetail manga) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Chapters', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        ValueListenableBuilder<Map<String, String>>(
-          valueListenable: downloadService.downloadStatusNotifier,
-          builder: (context, statuses, child) {
-            return ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: manga.chapters.length,
-              itemBuilder: (context, index) {
-                final chapter = manga.chapters[index];
-                final status = statuses[chapter.chapterId] ?? 'none';
-
-                return ListTile(
-                  title: Text(chapter.name),
-                  trailing: _buildDownloadIcon(downloadService, manga, chapter, status),
-                  onTap: () {
-                    firestoreService.addToHistory(
-                      mangaData: widget.manga,
-                      chapterId: chapter.chapterId,
-                      chapterName: chapter.name,
-                    );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ReaderScreen(
-                          chapterId: chapter.chapterId,
-                          mangaName: manga.name,
-                        ),
-                      ),
-                    );
-                  },
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                );
-              },
-              separatorBuilder: (context, index) => const Divider(),
+         Html(data: manga.description, style: {
+          "body": Style(maxLines: 4, textOverflow: TextOverflow.ellipsis),
+        }),
+        InkWell(
+          onTap: () {
+            // Show full description in a dialog
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Description'),
+                content: SingleChildScrollView(child: Html(data: manga.description)),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+                ],
+              ),
             );
           },
+          child: const Text(
+            'Show more',
+            style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildDownloadIcon(DownloadService downloadService, MangaDetail manga, Chapter chapter, String status) {
-    switch (status) {
-      case 'downloading':
-        return const SizedBox(
-          width: 24, height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2.0),
+  Widget _buildCategoryTags(MangaDetail manga) {
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 4.0,
+      children: manga.categories.map((category) {
+        return Chip(
+          label: Text(category.name),
+          backgroundColor: Colors.grey[200],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: Colors.grey[400]!),
+          ),
         );
-      case 'completed':
-        return const Icon(Icons.check_circle, color: Colors.green);
-      case 'failed':
-        return IconButton(
-          icon: const Icon(Icons.error, color: Colors.red),
-          onPressed: () => _startDownload(downloadService, manga, chapter),
-        );
-      default: // 'none'
-        return IconButton(
-          icon: const Icon(Icons.download_outlined),
-          onPressed: () => _startDownload(downloadService, manga, chapter),
-        );
-    }
+      }).toList(),
+    );
   }
 
-  void _startDownload(DownloadService downloadService, MangaDetail manga, Chapter chapter) {
-    downloadService.startDownload(DownloadTask(
-      mangaEndpoint: widget.endpoint,
-      chapterId: chapter.chapterId,
-      chapterName: chapter.name,
-      mangaName: manga.name,
-      thumbUrl: manga.thumbUrl,
-    ));
+  Widget _buildChapterList(MangaDetail manga) {
+    final chapters = manga.chapters;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${chapters.length} Chapters',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: chapters.length,
+          itemBuilder: (context, index) {
+            final chapter = chapters[index];
+            final date = DateFormat.yMd().format(DateTime.now().subtract(Duration(days: chapters.length - index)));
+
+            return ListTile(
+              title: Text('Chapter ${chapter.name}'),
+              subtitle: Text(date),
+              trailing: const Icon(Icons.download_outlined),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ReaderScreen(
+                      chapterId: chapter.chapterId,
+                      mangaName: manga.name,
+                      chapterList: manga.chapters.map((c) => {'id': c.chapterId, 'name': c.name}).toList(),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
   }
 }

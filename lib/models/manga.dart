@@ -1,4 +1,3 @@
-
 class Manga {
   final String name;
   final String thumbUrl;
@@ -14,13 +13,22 @@ class Manga {
 
   factory Manga.fromJson(Map<String, dynamic> json) {
     final String partialThumbUrl = json['thumb_url'] ?? '';
-    final String fullThumbUrl = 'https://img.otruyen.com/uploads/comics/$partialThumbUrl';
+    final String fullThumbUrl = 'https://img.otruyenapi.com/uploads/comics/$partialThumbUrl';
 
     return Manga(
       name: json['name'] ?? 'No Name',
       thumbUrl: fullThumbUrl,
       slug: json['slug'] ?? '',
       endpoint: json['slug'] ?? '',
+    );
+  }
+
+  factory Manga.fromFirestore(Map<String, dynamic> data) {
+    return Manga(
+      name: data['name'] ?? 'No Name',
+      thumbUrl: data['thumb_url'] ?? '',
+      slug: data['endpoint'] ?? '',
+      endpoint: data['endpoint'] ?? '',
     );
   }
 

@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -26,7 +25,7 @@ class DownloadTask {
   });
 }
 
-class DownloadService {
+class DownloadService extends ChangeNotifier {
   static const _databaseName = "MangaDownloads.db";
   static const _databaseVersion = 1;
 
@@ -42,10 +41,9 @@ class DownloadService {
   static const columnDownloadStatus = 'status';
   static const columnCreatedAt = 'created_at';
 
-  DownloadService._privateConstructor(){
+  DownloadService(){
     _loadInitialStatuses();
   }
-  static final DownloadService instance = DownloadService._privateConstructor();
 
   static Database? _database;
   Future<Database> get database async {
@@ -148,6 +146,7 @@ class DownloadService {
     final currentStatuses = Map<String, String>.from(downloadStatusNotifier.value);
     currentStatuses[chapterId] = status;
     downloadStatusNotifier.value = currentStatuses;
+    notifyListeners();
   }
 
   Future<int> _insertInitialRecord(DownloadTask task) async {
@@ -222,5 +221,6 @@ class DownloadService {
     final currentStatuses = Map<String, String>.from(downloadStatusNotifier.value);
     currentStatuses.remove(chapterId);
     downloadStatusNotifier.value = currentStatuses;
+    notifyListeners();
   }
 }
