@@ -3,16 +3,16 @@ class Manga {
   final String name;
   final String thumbUrl;
   final String slug;
+  final String endpoint;
 
   Manga({
     required this.name,
     required this.thumbUrl,
     required this.slug,
+    required this.endpoint,
   });
 
   factory Manga.fromJson(Map<String, dynamic> json) {
-    // The API returns a partial URL for the thumbnail.
-    // We need to prepend the base URL to display the image.
     final String partialThumbUrl = json['thumb_url'] ?? '';
     final String fullThumbUrl = 'https://img.otruyen.com/uploads/comics/$partialThumbUrl';
 
@@ -20,6 +20,16 @@ class Manga {
       name: json['name'] ?? 'No Name',
       thumbUrl: fullThumbUrl,
       slug: json['slug'] ?? '',
+      endpoint: json['slug'] ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'thumb_url': thumbUrl,
+      'slug': slug,
+      'endpoint': endpoint,
+    };
   }
 }

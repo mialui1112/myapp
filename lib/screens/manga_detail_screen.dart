@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:myapp/models/chapter.dart';
 import 'package:myapp/models/manga_detail.dart';
 import 'package:myapp/services/otruyen_api_service.dart';
 import 'package:myapp/services/firestore_service.dart';
@@ -72,8 +73,8 @@ class MangaDetailScreenState extends State<MangaDetailScreen> {
   }
 
   Widget _buildSliverAppBar(FirestoreService firestoreService, MangaDetail? manga) {
-    final displayName = manga?.name ?? widget.manga['name'] ?? 'Manga';
-    final displayThumb = manga?.thumbUrl ?? widget.manga['thumb_url'] ?? '';
+    final displayName = manga?.name ?? widget.manga['name'];
+    final displayThumb = manga?.thumbUrl ?? widget.manga['thumb_url'];
 
     return SliverAppBar(
       expandedHeight: 300.0,
@@ -174,7 +175,10 @@ class MangaDetailScreenState extends State<MangaDetailScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ReaderScreen(chapterId: chapter.chapterId),
+                        builder: (context) => ReaderScreen(
+                          chapterId: chapter.chapterId,
+                          mangaName: manga.name,
+                        ),
                       ),
                     );
                   },
@@ -216,8 +220,8 @@ class MangaDetailScreenState extends State<MangaDetailScreen> {
       mangaEndpoint: widget.endpoint,
       chapterId: chapter.chapterId,
       chapterName: chapter.name,
-      mangaName: manga.name ?? widget.manga['name'] ?? '',
-      thumbUrl: manga.thumbUrl ?? widget.manga['thumb_url'] ?? '',
+      mangaName: manga.name,
+      thumbUrl: manga.thumbUrl,
     ));
   }
 }

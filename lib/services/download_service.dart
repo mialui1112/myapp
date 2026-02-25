@@ -94,7 +94,6 @@ class DownloadService {
   void startDownload(DownloadTask task) async {
     final currentStatuses = downloadStatusNotifier.value;
     if (currentStatuses[task.chapterId] == 'completed' || currentStatuses[task.chapterId] == 'downloading') {
-        print("Chapter is already downloaded or in queue.");
         return;
     }
 
@@ -140,7 +139,6 @@ class DownloadService {
 
     } catch (e) {
       await _updateToFailed(task.chapterId);
-      print("Failed to download chapter ${task.chapterId}: $e");
     } finally {
       _processQueue();
     }

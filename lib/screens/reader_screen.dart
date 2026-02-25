@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -10,16 +9,21 @@ import 'package:myapp/services/otruyen_api_service.dart';
 
 class ReaderScreen extends StatefulWidget {
   final String? chapterId;
+  final String mangaName;
   final Map<String, dynamic>? downloadedChapterData;
 
-  const ReaderScreen({super.key, this.chapterId, this.downloadedChapterData}) 
-      : assert(chapterId != null || downloadedChapterData != null);
+  const ReaderScreen({
+    super.key,
+    this.chapterId,
+    required this.mangaName,
+    this.downloadedChapterData,
+  }) : assert(chapterId != null || downloadedChapterData != null);
 
   @override
-  _ReaderScreenState createState() => _ReaderScreenState();
+  ReaderScreenState createState() => ReaderScreenState();
 }
 
-class _ReaderScreenState extends State<ReaderScreen> {
+class ReaderScreenState extends State<ReaderScreen> {
   late Future<ChapterContent> _chapterContentFuture;
   final OTruyenApiService _apiService = OTruyenApiService();
 
@@ -45,8 +49,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   Future<ChapterContent> _loadOfflineChapter() async {
     final data = widget.downloadedChapterData!;
-    final List<String> imagePaths = List<String>.from(jsonDecode(data['image_paths']));
+    final List<String> imagePaths = List<String>.from(
+      jsonDecode(data['image_paths']),
+    );
     return ChapterContent(
+      mangaName: data["manga_name"],
       chapterName: data['chapter_name'],
       imageUrls: imagePaths,
     );
@@ -63,7 +70,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
   void _toggleUI() {
     setState(() {
       _showUI = !_showUI;
-      SystemChrome.setEnabledSystemUIMode(_showUI ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky);
+      SystemChrome.setEnabledSystemUIMode(
+        _showUI ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
+      );
     });
   }
 
@@ -79,7 +88,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
           } else if (snapshot.hasError) {
             return _buildErrorView(snapshot.error);
           } else if (!snapshot.hasData || snapshot.data!.imageUrls.isEmpty) {
-            return const Center(child: Text('No images found.', style: TextStyle(color: Colors.white)));
+            return const Center(
+              child: Text(
+                'No images found.',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
           }
 
           final chapter = snapshot.data!;
@@ -105,8 +119,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
       scrollDirection: Axis.horizontal,
       scrollPhysics: const BouncingScrollPhysics(),
       builder: (context, index) {
-        final imageProvider = isOfflineMode 
-            ? FileImage(File(imageUrls[index])) 
+        final imageProvider = isOfflineMode
+            ? FileImage(File(imageUrls[index]))
             : NetworkImage(imageUrls[index]) as ImageProvider;
         return PhotoViewGalleryPageOptions(
           imageProvider: imageProvider,
@@ -117,7 +131,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
         );
       },
       onPageChanged: (index) => _currentPageNotifier.value = index + 1,
-      loadingBuilder: (context, event) => const Center(child: CircularProgressIndicator()),
+      loadingBuilder: (context, event) =>
+          const Center(child: CircularProgressIndicator()),
       backgroundDecoration: const BoxDecoration(color: Colors.black),
     );
   }
@@ -125,14 +140,23 @@ class _ReaderScreenState extends State<ReaderScreen> {
   Widget _buildTopUI(String chapterName) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
-      transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+      transitionBuilder: (child, animation) =>
+          FadeTransition(opacity: animation, child: child),
       child: _showUI
           ? Positioned(
               key: const ValueKey('topUI'),
-              top: 0, left: 0, right: 0,
+              top: 0,
+              left: 0,
+              right: 0,
               child: AppBar(
-                title: Text(chapterName, style: const TextStyle(fontSize: 16, shadows: [Shadow(blurRadius: 4)])),
-                backgroundColor: Colors.black.withOpacity(0.6),
+                title: Text(
+                  widget.mangaName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    shadows: [Shadow(blurRadius: 4)],
+                  ),
+                ),
+                backgroundColor: Colors.black.withAlpha(153),
                 elevation: 0,
               ),
             )
@@ -144,22 +168,38 @@ class _ReaderScreenState extends State<ReaderScreen> {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       transitionBuilder: (child, animation) => SlideTransition(
-        position: Tween<Offset>(begin: const Offset(0.0, 1.0), end: Offset.zero).animate(animation),
+        position: Tween<Offset>(
+          begin: const Offset(0.0, 1.0),
+          end: Offset.zero,
+        ).animate(animation),
         child: child,
       ),
       child: _showUI
           ? Positioned(
               key: const ValueKey('bottomUI'),
-              bottom: 0, left: 0, right: 0,
+              bottom: 0,
+              left: 0,
+              right: 0,
               child: Container(
-                color: Colors.black.withOpacity(0.6),
-                padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 10, top: 10, left: 16, right: 16),
+                color: Colors.black.withAlpha(153),
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).padding.bottom + 10,
+                  top: 10,
+                  left: 16,
+                  right: 16,
+                ),
                 child: ValueListenableBuilder<int>(
                   valueListenable: _currentPageNotifier,
                   builder: (context, currentPage, child) {
                     return Row(
                       children: [
-                        Text('$currentPage / $totalPages', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        Text(
+                          '$currentPage / $totalPages',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         Expanded(
                           child: Slider(
                             value: currentPage.clamp(1, totalPages).toDouble(),
@@ -167,7 +207,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             max: totalPages.toDouble(),
                             activeColor: Colors.deepPurpleAccent,
                             inactiveColor: Colors.white30,
-                            onChanged: (value) => _pageController.jumpToPage(value.toInt() - 1),
+                            onChanged: (value) =>
+                                _pageController.jumpToPage(value.toInt() - 1),
                           ),
                         ),
                       ],
@@ -192,7 +233,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
               isOfflineMode
                   ? 'Failed to load downloaded chapter. The files may be corrupted or deleted.'
                   : 'Failed to load chapter. Please check your connection and try again.',
-              style: const TextStyle(color: Colors.white70), textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70),
+              textAlign: TextAlign.center,
             ),
           ),
           if (!isOfflineMode)
@@ -202,9 +244,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
                 onPressed: () {
-                  setState(() {
-                    _chapterContentFuture = _apiService.getChapterContent(widget.chapterId!);
-                  });
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ReaderScreen(
+                        chapterId: widget.chapterId,
+                        mangaName: widget.mangaName,
+                      ),
+                    ),
+                  );
                 },
               ),
             ),

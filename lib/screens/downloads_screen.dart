@@ -1,5 +1,4 @@
 
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/services/download_service.dart';
@@ -84,7 +83,10 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ReaderScreen(downloadedChapterData: chapter),
+                            builder: (context) => ReaderScreen(
+                              downloadedChapterData: chapter,
+                              mangaName: chapter[DownloadService.columnMangaName],
+                            ),
                           ),
                         );
                       },
